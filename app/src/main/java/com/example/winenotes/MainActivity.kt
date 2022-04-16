@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.winenotes.databinding.ActivityMainBinding
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +33,18 @@ class MainActivity : AppCompatActivity() {
 
         adapter = MyAdapter()
         binding.myRecyclerView.adapter = adapter
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getDatabase(applicationContext)
+            val dao = db.noteDao()
+            val results = dao.getNotesByDate()
+
+            withContext(Dispatchers.Main) {
+                data.clear()
+                data.addAll(results)
+                adapter.notifyDataSetChanged()
+            }
+        }
     }
 
 
@@ -51,9 +64,31 @@ class MainActivity : AppCompatActivity() {
         if (item.itemId == R.id.add_menu_item) {
 
         } else if (item.itemId == R.id.date_sort_menu_item){
+            CoroutineScope(Dispatchers.IO).launch {
 
+                val db = AppDatabase.getDatabase(applicationContext)
+                val dao = db.noteDao()
+                val results = dao.getNotesByDate()
+
+                withContext(Dispatchers.Main) {
+                    data.clear()
+                    data.addAll(results)
+                    adapter.notifyDataSetChanged()
+                }
+            }
         } else if (item.itemId == R.id.title_sort_menu_item){
+            CoroutineScope(Dispatchers.IO).launch {
 
+                val db = AppDatabase.getDatabase(applicationContext)
+                val dao = db.noteDao()
+                val results = dao.getNotesByTitle()
+
+                withContext(Dispatchers.Main) {
+                    data.clear()
+                    data.addAll(results)
+                    adapter.notifyDataSetChanged()
+                }
+            }
         }
 
         return super.onOptionsItemSelected(item)
