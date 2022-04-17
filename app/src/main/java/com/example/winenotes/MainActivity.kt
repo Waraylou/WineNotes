@@ -48,11 +48,20 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    override fun onResume() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getDatabase(applicationContext)
+            val dao = db.noteDao()
+            val results = dao.getNotesByDate()
 
-
-
-
-
+            withContext(Dispatchers.Main) {
+                data.clear()
+                data.addAll(results)
+                adapter.notifyDataSetChanged()
+            }
+        }
+        super.onResume()
+    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
@@ -62,6 +71,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.add_menu_item) {
+            val intent = Intent(applicationContext, NoteActivity::class.java)
+            intent.putExtra("purpose","Add")
+
+            startActivity(intent)
 
         } else if (item.itemId == R.id.date_sort_menu_item){
             CoroutineScope(Dispatchers.IO).launch {
@@ -102,13 +115,17 @@ class MainActivity : AppCompatActivity() {
                 .setOnClickListener(this)
         }
 
-        fun setText(text: String) {
+        fun setText(text: String, date:String) {
             view.findViewById<TextView>(R.id.item_title_textView).setText(text)
+            view.findViewById<TextView>(R.id.item_date_textView).setText(date)
         }
 
         override fun onClick(view: View?) {
             if (view != null) {
-
+                val intent = Intent(view.context, NoteActivity::class.java)
+                intent.putExtra("purpose","View")
+                intent.putExtra("id", data[adapterPosition].noteId)
+                startActivity(intent)
             }
         }
     }
@@ -122,7 +139,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+            var title = data[position].title
+            var date = data[position].lastModified
 
+            holder.setText(title,date)
         }
 
         override fun getItemCount(): Int {
