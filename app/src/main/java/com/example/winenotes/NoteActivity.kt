@@ -3,6 +3,7 @@ package com.example.winenotes
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import com.example.winenotes.databinding.ActivityMainBinding
 import com.example.winenotes.databinding.ActivityNoteBinding
 import kotlinx.coroutines.CoroutineScope
@@ -30,14 +31,34 @@ class NoteActivity : AppCompatActivity() {
 
         if(purpose == "View"){
             val id = intent.getLongExtra("id",0L)
-            binding.noteEditText.focusable = View.NOT_FOCUSABLE
-            binding.titleEditText.focusable = View.NOT_FOCUSABLE
-            if(id != 0L){
-                // put database coroutine here and get values at this id passed in
-                // if id == 0L then Put ERROR in all fields
-            }
+            viewNote(id)
         }
     }
+
+    fun viewNote(id: Long){
+        binding.noteEditText.focusable = View.NOT_FOCUSABLE
+        binding.titleEditText.focusable = View.NOT_FOCUSABLE
+        if(id != 0L){
+            CoroutineScope(Dispatchers.IO).launch {
+
+                val db = AppDatabase.getDatabase(applicationContext)
+                val dao = db.noteDao()
+
+                val note = dao.getNote(id)
+                withContext(Dispatchers.Main) {
+                    binding.noteEditText.setText(note.notes)
+                    binding.titleEditText.setText(note.title)
+                    binding.textView2.setText("")
+                }
+            }
+        } else{
+            binding.noteEditText.setText("ERROR")
+            binding.titleEditText.setText("ERROR")
+        }
+    }
+
+
+
 
     override fun onBackPressed() {
         if(purpose == "Add") {
@@ -47,7 +68,7 @@ class NoteActivity : AppCompatActivity() {
                 val dao = db.noteDao()
                 val title = binding.titleEditText.text.toString()
                 if (title == "") {
-                    // make a toast to tell user to fill out fields
+
 
                 } else {
                     val text = binding.noteEditText.text.toString()

@@ -1,5 +1,6 @@
 package com.example.winenotes
 
+import android.content.DialogInterface
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.winenotes.databinding.ActivityMainBinding
 import kotlinx.coroutines.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -108,11 +111,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class MyViewHolder(val view: View) :
-        RecyclerView.ViewHolder(view), View.OnClickListener {
+        RecyclerView.ViewHolder(view), View.OnClickListener, View.OnLongClickListener {
 
         init {
             view.findViewById<View>(R.id.item_constraintLayout)
                 .setOnClickListener(this)
+            view.findViewById<View>(R.id.item_constraintLayout)
+                .setOnLongClickListener(this)
         }
 
         fun setText(text: String, date:String) {
@@ -128,6 +133,43 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         }
+
+        override fun onLongClick(p0: View?): Boolean {
+            val listener = object : DialogInterface.OnClickListener{
+                override fun onClick(dialog: DialogInterface?, which: Int) {
+                    if(which == DialogInterface.BUTTON_POSITIVE){
+                        if(view != null){
+                            CoroutineScope(Dispatchers.IO).launch {
+
+                                val db = AppDatabase.getDatabase(applicationContext)
+                                val dao = db.noteDao()
+                                dao.deleteNote(data[adapterPosition].noteId)
+
+                                val results = dao.getNotesByTitle()
+
+                                withContext(Dispatchers.Main) {
+                                    data.clear()
+                                    data.addAll(results)
+                                    adapter.notifyDataSetChanged()
+                                }
+                            }
+                    }
+                    else if(which == DialogInterface.BUTTON_NEGATIVE){
+                       return;
+                    }
+                }
+            }
+            }
+
+            val builder = AlertDialog.Builder(binding.root.context)
+            builder.setTitle("Confirmation")
+            builder.setMessage("Are you sure you want to delete this Note?")
+            builder.setPositiveButton(android.R.string.ok, listener)
+            builder.setNegativeButton(android.R.string.cancel, listener)
+            builder.show()
+
+            return true
+        }
     }
 
 
@@ -140,9 +182,15 @@ class MainActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
             var title = data[position].title
-            var date = data[position].lastModified
+            var dateString = data[position].lastModified
+            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+            parser.setTimeZone(TimeZone.getTimeZone("UTC"))
 
-            holder.setText(title,date)
+            val dateInDatabase : Date = parser.parse(dateString)
+            val displayFormat = SimpleDateFormat("MM/dd/yyyy HH:mm a")
+            val displayDate = displayFormat.format(dateInDatabase)
+
+            holder.setText(title,displayDate)
         }
 
         override fun getItemCount(): Int {
