@@ -111,13 +111,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class MyViewHolder(val view: View) :
-        RecyclerView.ViewHolder(view), View.OnClickListener, View.OnLongClickListener {
+        RecyclerView.ViewHolder(view), View.OnClickListener {
 
         init {
             view.findViewById<View>(R.id.item_constraintLayout)
                 .setOnClickListener(this)
-            view.findViewById<View>(R.id.item_constraintLayout)
-                .setOnLongClickListener(this)
         }
 
         fun setText(text: String, date:String) {
@@ -134,42 +132,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        override fun onLongClick(p0: View?): Boolean {
-            val listener = object : DialogInterface.OnClickListener{
-                override fun onClick(dialog: DialogInterface?, which: Int) {
-                    if(which == DialogInterface.BUTTON_POSITIVE){
-                        if(view != null){
-                            CoroutineScope(Dispatchers.IO).launch {
-
-                                val db = AppDatabase.getDatabase(applicationContext)
-                                val dao = db.noteDao()
-                                dao.deleteNote(data[adapterPosition].noteId)
-
-                                val results = dao.getNotesByTitle()
-
-                                withContext(Dispatchers.Main) {
-                                    data.clear()
-                                    data.addAll(results)
-                                    adapter.notifyDataSetChanged()
-                                }
-                            }
-                    }
-                    else if(which == DialogInterface.BUTTON_NEGATIVE){
-                       return;
-                    }
-                }
-            }
-            }
-
-            val builder = AlertDialog.Builder(binding.root.context)
-            builder.setTitle("Confirmation")
-            builder.setMessage("Are you sure you want to delete this Note?")
-            builder.setPositiveButton(android.R.string.ok, listener)
-            builder.setNegativeButton(android.R.string.cancel, listener)
-            builder.show()
-
-            return true
-        }
     }
 
 
